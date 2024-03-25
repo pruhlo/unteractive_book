@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Порядок процессов</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+  .container {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    margin: 0 auto;
+    padding-top: 20px;
+  }
+  .block {
+    padding: 10px;
+    margin: 5px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    user-select: none; /* чтобы текст не выделялся во время перетаскивания */
+  }
+  .correct {
+    background-color: lightgreen;
+  }
+  .checkmark {
+    display: none;
+  }
+  .correct .checkmark {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: green;
+    margin-right: 5px;
+  }
+  .check-btn {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+<h1> Розмістіть блоки основних стадій виробництва таблеток в правильному порядку</h1>
+<div class="container">
+  <div class="block" draggable="true" data-order="1">зважування вихідного матеріалу</div>
+  <div class="block" draggable="true" data-order="2">подрібнення</div>
+  <div class="block" draggable="true" data-order="3">просіювання</div>
+  <div class="block" draggable="true" data-order="4">змішування</div>
+  <div class="block" draggable="true" data-order="5">грануляції</div>
+  <div class="block" draggable="true" data-order="6">таблетування (пресування)</div>
+  <div class="block" draggable="true" data-order="7">нанесення покриття</div>
+</div>
+
+<button class="check-btn">Перевірити</button>
+
+<script>
+  const blocks = document.querySelectorAll('.block');
+  let currentOrder = 0;
+
+  blocks.forEach(block => {
+    block.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', block.getAttribute('data-order'));
+      block.classList.add('dragging');
+    });
+
+    block.addEventListener('dragend', () => {
+      block.classList.remove('dragging');
+    });
+  });
+
+  const container = document.querySelector('.container');
+
+  container.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(container, e.clientY);
+    const draggingElement = document.querySelector('.dragging');
+    if (afterElement == null) {
+      container.appendChild(draggingElement);
+    } else {
+      container.insertBefore(draggingElement, afterElement);
+    }
+  });
+
+  function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.block:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  document.querySelector('.check-btn').addEventListener('click', () => {
+    const correctBlocks = Array.from(document.querySelectorAll('.block')).every((block, index) => {
+      return parseInt(block.getAttribute('data-order')) === index + 1;
+    });
+
+    if (correctBlocks) {
+      alert('Правильно!');
+    } else {
+      alert('Неправильно! Спробуйте ще раз.');
+    }
+  });
+
+  // Перемешиваем блоки
+  function shuffleBlocks() {
+    const container = document.querySelector('.container');
+    const blocks = Array.from(container.querySelectorAll('.block'));
+    blocks.forEach(block => container.removeChild(block));
+    shuffleArray(blocks);
+    blocks.forEach(block => container.appendChild(block));
+  }
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  // Перемешиваем блоки при загрузке страницы
+  window.onload = shuffleBlocks;
+</script>
+
+</body>
+</html>
+
